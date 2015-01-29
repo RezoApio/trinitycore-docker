@@ -102,7 +102,7 @@ In this example we created a data-only container called `tc-maps` from the
 On mac, assuming you are running boot2docker (and thus want to use it's bridged NAT address as the entry):
 
 ```sh
-$ docker run --rm -e MYSQL_ROOT_PASSWORD=password -e USER_IP_ADDRESS=$(boot2docker ip) trinitycore update-ip
+$ docker run --rm --link tc-dbserver:TCDB -e MYSQL_ROOT_PASSWORD=password -e USER_IP_ADDRESS=$(boot2docker ip) trinitycore update-ip
 ```
 
 If deploying to another server, it's likely you'll specify that server's address instead.
