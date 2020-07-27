@@ -2,12 +2,7 @@
 
 CMD="${1%_safe}"
 
-if [ "$CMD" = 'data' ]
-then
-
-  echo 'Built data only container'
-
-elif [ "$CMD" = 'extract-maps' ]
+if [ "$CMD" = 'extract-maps' ]
 then
 
   echo "Extracting maps from $CLIENT_DIR into $MAPS_DIR"
@@ -27,7 +22,7 @@ then
 
     # copy installed via TrinityCore repo
     mkdir -p $CONF_DIR
-    cp /usr/local/etc/worldserver.conf.dist $CONF_DIR/worldserver.conf
+    cp /usr/local/trinitycore/etc/worldserver.conf.dist $CONF_DIR/worldserver.conf
 
   fi
 
@@ -41,9 +36,11 @@ then
   sed -i "s/WorldDatabaseInfo.*$/WorldDatabaseInfo = \"$TCDB_PORT_3306_TCP_ADDR;$TCDB_PORT_3306_TCP_PORT;trinity;trinity;world\"/" $CONF_DIR/worldserver.conf
   sed -i "s/CharacterDatabaseInfo.*$/CharacterDatabaseInfo = \"$TCDB_PORT_3306_TCP_ADDR;$TCDB_PORT_3306_TCP_PORT;trinity;trinity;characters\"/" $CONF_DIR/worldserver.conf
   sed -i "s%DataDir.*$%DataDir = \"$MAPS_DIR\"%" $CONF_DIR/worldserver.conf
+  sed -i "s%BuildDirectory.*$%BuildDirectory = \"../TrinityCore\"%" $CONF_DIR/worldserver.conf
 
   # RUN. IT.
-  /usr/local/bin/worldserver -c $CONF_DIR/worldserver.conf
+  cd /usr/local/trinitycore/bin/
+  ./worldserver -c $CONF_DIR/worldserver.conf
 
 elif [ "$CMD" = 'authserver' ]
 then
@@ -57,7 +54,7 @@ then
 
     # copy installed via TrinityCore repo
     mkdir -p $CONF_DIR
-    cp /usr/local/etc/authserver.conf.dist $CONF_DIR/authserver.conf
+    cp /usr/local/trinitycore/etc/authserver.conf.dist $CONF_DIR/authserver.conf
 
   fi
 
@@ -70,7 +67,7 @@ then
   sed -i "s/LoginDatabaseInfo.*$/LoginDatabaseInfo = \"$TCDB_PORT_3306_TCP_ADDR;$TCDB_PORT_3306_TCP_PORT;trinity;trinity;auth\"/" $CONF_DIR/authserver.conf
 
   # RUN. IT.
-  /usr/local/bin/authserver -c $CONF_DIR/authserver.conf
+  /usr/local/trinitycore/bin/authserver -c $CONF_DIR/authserver.conf
 
 elif [ "$CMD" = 'help' ]
 then
@@ -93,13 +90,12 @@ then
   echo '      of your local network to connect to your server. This must be the'
   echo '      same as the worldserver ip address.'
   echo ""
-  echo '  data'
-  echo '      Build container to be used as a data container'
   echo ""
   echo '  extract-maps'
   echo '      Runs a script to extract maps, mmaps, vmaps, and dbc from the'
   echo '      client. The script assumes that the client is version 3.3.5a'
   echo '      and that the client is mounted at point /opt/wow-client/'
+  echo '      if your local install is somewhere else, you can just ln -s /opt/wow-client/ /some/where/to/your/install/Wow3.3.5Client'
   echo ""
   echo '  help'
   echo '      Displays this help command. But I guess runs this container'
@@ -109,7 +105,7 @@ then
   echo '  update-ip'
   echo '      Update the ip address of the worldserver and authserver by'
   echo '      specifying the environment variable USER_IP_ADDRESS.'
-  echo '      Specify a public ip address if you want others outside'
+  echo '      You need to specify the ip address of the docker tc-db'
   echo '      of your local network to connect to your server.'
   echo '      You must also specify the environment variable'
   echo '      MYSQL_ROOT_PASSWORD'
@@ -150,9 +146,6 @@ then
 
     # TODO: is there a way to do this without using a heredoc?
     mysql -h"$TCDB_PORT_3306_TCP_ADDR" -uroot -p"$MYSQL_ROOT_PASSWORD" <<-GrantDoc
-    GRANT ALL PRIVILEGES ON world . * TO 'trinity'@'%' IDENTIFIED BY 'trinity' WITH GRANT OPTION;
-    GRANT ALL PRIVILEGES ON characters . * TO 'trinity'@'%' IDENTIFIED BY 'trinity' WITH GRANT OPTION;
-    GRANT ALL PRIVILEGES ON auth . * TO 'trinity'@'%' IDENTIFIED BY 'trinity' WITH GRANT OPTION;
     use auth;
     UPDATE realmlist set address='${USER_IP_ADDRESS}', localAddress='${USER_IP_ADDRESS}' WHERE name='Trinity';
     FLUSH PRIVILEGES;
