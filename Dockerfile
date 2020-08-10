@@ -2,7 +2,8 @@ FROM  debian:10
 
 ENV TC_DIR     /usr/local/trinitycore
 ENV TC_REPO    git://github.com/TrinityCore/TrinityCore.git
-ENV TC_DB_URL  https://github.com/TrinityCore/TrinityCore/releases/download/TDB335.20051/TDB_full_world_335.20051_2020_05_15.7z
+ENV TC_DB_URL  https://github.com/TrinityCore/TrinityCore/releases
+##/download/TDB335.20051/TDB_full_world_335.20051_2020_05_15.7z
 #TODO Add mechanism to pull latest releases from TC repo
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -45,7 +46,9 @@ ADD entrypoint.sh /etc/entrypoint.sh
 RUN chmod +x /etc/entrypoint.sh
 
 RUN cd $TC_DIR/bin && \
-    wget $TC_DB_URL && \
+    wget $TC_DB_URL -O /tmp/latestver.out && \
+    LATEST_VER = $(grep "TDB_full_world_335" /tmp/latestver.out | head -1 | awk -F\" '{print $2}') && \
+    wget "http://github.com"$LATEST_VER && \
     7z x *.7z && \
     rm *.7z
 
